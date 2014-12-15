@@ -1,21 +1,20 @@
-package com.xdgames.MysteryGame;
+package com.xianheh.xdgames;
 
 import java.sql.*;
 
 class DatabaseHelper {
 	private final String JDBC_DRIVER="com.mysql.jdbc.Driver";  
     private String DB_URL;
-    private String USERNAME;
-    private String PASSWORD;
+    private String USERNAME = System.getenv("OPENSHIFT_MYSQL_DB_USERNAME");
+    private String PASSWORD = System.getenv("OPENSHIFT_MYSQL_DB_PASSWORD");
+    private String hostname = System.getenv("OPENSHIFT_MYSQL_DB_HOST"); 
+    private String portNumber = System.getenv("OPENSHIFT_MYSQL_DB_PORT");
+    private String appName = System.getenv("OPENSHIFT_APP_NAME");
     private Connection connection;
 
     
     public DatabaseHelper () {
-    	// TODO: rename database from xdgames to xdgamesDB
-    	this.DB_URL ="jdbc:mysql://localhost/xdgames";
-		this.USERNAME = "root";
-		// TODO: have a better password once this repo is private
-		this.PASSWORD = "pass1234";
+    	this.DB_URL ="jdbc:mysql://" + this.hostname + ":" + this.portNumber + "/" + this.appName;
     }
 	public DatabaseHelper (String dbUrl, String userName, String password) {
 		this.DB_URL = dbUrl;

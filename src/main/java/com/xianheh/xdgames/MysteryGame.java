@@ -1,4 +1,4 @@
-package com.xdgames.MysteryGame;
+package com.xianheh.xdgames;
 
 import java.io.IOException;
 
@@ -16,7 +16,7 @@ import java.util.logging.Logger;
 /**
  * Servlet implementation class xdgamesServetMain
  */
-@WebServlet("/MysteryGame")
+@WebServlet("/MysteryGame/registration")
 public class MysteryGame extends HttpServlet {
 	private static final long serialVersionUID = 1L;
     private final static Logger LOGGER = Logger.getLogger(DatabaseHelper.class.getName()); 
@@ -73,3 +73,4 @@ public class MysteryGame extends HttpServlet {
 	}
 
 }
+
