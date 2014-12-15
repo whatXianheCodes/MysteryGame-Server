@@ -3,5 +3,5 @@ xdgames-server
 
 Currently in progress:
 
-Server can be found at xdgames.xianheh.com
+Server can be found at http://xdgames.xianheh.com
 
