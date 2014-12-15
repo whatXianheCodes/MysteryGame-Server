@@ -1,7 +1,7 @@
 xdgames-server
 ==============
 
-Currently in work:
+Currently in progress:
 
 Server can be found at xdgames.xianheh.com
 
