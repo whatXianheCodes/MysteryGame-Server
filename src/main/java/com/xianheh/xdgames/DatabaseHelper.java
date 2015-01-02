@@ -16,6 +16,7 @@ class DatabaseHelper {
     public DatabaseHelper () {
     	this.DB_URL ="jdbc:mysql://" + this.hostname + ":" + this.portNumber + "/" + this.appName;
     }
+    
 	public DatabaseHelper (String dbUrl, String userName, String password) {
 		this.DB_URL = dbUrl;
 		this.USERNAME = userName;
@@ -35,19 +36,34 @@ class DatabaseHelper {
 	    }
 	}
 	
-	public ResultSet executeQuery (String statement) {
+	// TODO: needs to be tested
+	public void insertQuery (String statement) {
 		try {
 			if (connection == null) {
 				this.openDatabase();
 			}
 			Statement stmt = connection.createStatement();
-			ResultSet rs = stmt .executeQuery(statement);
+			stmt.executeUpdate(statement);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public ResultSet readQuery (String statement) {
+		try {
+			if (connection == null) {
+				this.openDatabase();
+			}
+			Statement stmt = connection.createStatement();
+			ResultSet rs = stmt.executeQuery(statement);
 			return rs;
 		} catch (SQLException e) {
 			e.printStackTrace();
 			return null;
 		}
 	}
+	
+	
 
 	
 	public void closeDatabase () {
