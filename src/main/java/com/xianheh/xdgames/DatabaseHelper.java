@@ -75,6 +75,7 @@ class DatabaseHelper {
 				e.printStackTrace();
 			}
 		}
+		connection = null;
 	}
 	
 }

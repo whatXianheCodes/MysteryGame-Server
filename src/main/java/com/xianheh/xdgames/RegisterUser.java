@@ -27,7 +27,7 @@ public class RegisterUser extends HttpServlet {
 	private static final long serialVersionUID = 1L;
     private final static Logger LOGGER = Logger.getLogger(DatabaseHelper.class.getName()); 
     private DatabaseHelper db;
-    private JSONObject registrationJSON;
+    private JSONObject registrationJSON; 
     
     private final String FIRST_NAME_DB = "FirstName";
     private final String LAST_NAME_DB = "LastName";
@@ -71,9 +71,6 @@ public class RegisterUser extends HttpServlet {
     	catch (SQLException e) {
 			e.printStackTrace();
 		}
-    	finally {
-    		db.closeDatabase();
-    	}
     }
     
     private void getRegistrationJSON (HttpServletRequest request) {
@@ -112,6 +109,98 @@ public class RegisterUser extends HttpServlet {
     	return db.insertQuery(stmt);
     }
     
+    private boolean checkInvitation (String invitationCode) {
+        //TODO: add security check to determine whether the code is valid
+        final String INVITE_CODE_PATTERN = "^[A-Za-z0-9]{4}-[A-Za-z0-9]{4}-[A-Za-z0-9]{4}-[A-Za-z0-9]{4}$";
+        return invitationCode.matches(INVITE_CODE_PATTERN);
+    }
+
+    private boolean checkFName (String firstName) {
+        final String NAME_PATTERN = "[-A-Za-z]{1,}";
+        return (firstName.matches(NAME_PATTERN));
+    }
+    
+    private boolean checkLName (String lastname) {
+        final String NAME_PATTERN = "[-A-Za-z]{1,}";
+        return (lastname.matches(NAME_PATTERN));
+    }
+
+    private boolean checkEmail (String email) {
+    	final String EMAIL_PATTERN = "^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@"
+                + "[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$";
+        return email.matches(EMAIL_PATTERN);
+    }
+
+    private boolean checkPassword (String password) {
+        return (password.length()!= 0);
+    }
+
+    private boolean checkUsername (String username) {
+        return (username.length() != 0);
+    }
+    
+    private boolean containUsername (String username) {
+    	username = username.toLowerCase();
+    	   
+    	String stmt = "SELECT * FROM Users WHERE ";
+    	stmt  += USER_NAME_DB + "= '" + username + "';";
+    	db.openDatabase();
+	    ResultSet rs = db.readQuery(stmt );
+	    if (rs != null) {
+		    return true;
+	    }
+	    return false;
+    }
+    
+    private boolean containEmail (String email) {
+    	email = email.toLowerCase();
+    	String stmt = "SELECT * FROM Users WHERE ";
+     	stmt  += EMAIL_DB + "= '" + email + "';";
+     	db.openDatabase();
+     	ResultSet rs = db.readQuery(stmt );
+	    if (rs != null) {
+		    return true;
+	    }
+	    return false;
+    }
+    
+    private String validateUserRegistration (String fname, String lname, String email,	
+    		String username, String invitationCode,	String password) {
+
+    	if (fname.isEmpty() || lname.isEmpty() || email.isEmpty() 
+				|| username.isEmpty() || invitationCode.isEmpty() || password.isEmpty()) {
+			return "Error: Empty field";
+		}
+    	
+    	if (!checkUsername(username)) {
+    		return "Error: Invalid username";
+    	}
+    	if (!checkEmail(email)) {
+    		return "Error: Invalid email";
+    	}
+    	if (!checkPassword (password)) {
+    		return "Error: Invalid password";
+    	}
+    	if (!checkFName (fname)) {
+    		return "Error: Invalid first name";
+    	}
+    	if (!checkLName (lname)) {
+    		return "Error: Invalid last name";
+    	}
+    	if (!checkInvitation (invitationCode)) {
+    		return "Error: Invalid invitation code";
+    	}
+    	    	
+	    if (!containUsername(username)) {
+		    return "Error: Usename already exist";
+	    }
+	   
+	    if (!containEmail(email)) {
+		    return "Error: Email already exist";
+	    }
+    	return "Success";
+    }
+    
     public void init() throws ServletException
     {
         // Do required initialization
@@ -138,6 +227,12 @@ public class RegisterUser extends HttpServlet {
 		String invitationCode = getValueFromRegistration(INVITATION_CODE_SERVER);
 		String password = getValueFromRegistration(PASSWORD_SERVER);
 		
+		String result = validateUserRegistration(fname, lname, email, username, invitationCode, password);
+		LOGGER.info (result);
+		if (result.contains("Error")) {
+			LOGGER.info("RESULT CONTAIN ERROR");
+			return;
+		}
 		// TODO: properly handle response and put into seperate function
 		// TODO: Check before inserting into SQL database
 		if (insertUserIntoDB (fname, lname, email, username, invitationCode, password)) {
@@ -155,6 +250,9 @@ public class RegisterUser extends HttpServlet {
 		    response.addHeader("Access-Control-Allow-Headers", "Content-Type");
 		    response.addHeader("Access-Control-Max-Age", "86400");
 		}
+
+		readAllUsers();
+		db.closeDatabase();
 
 	}
 
