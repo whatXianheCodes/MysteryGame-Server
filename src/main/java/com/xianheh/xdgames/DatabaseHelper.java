@@ -36,8 +36,7 @@ class DatabaseHelper {
 	    }
 	}
 	
-	// TODO: needs to be tested
-	public void insertQuery (String statement) {
+	public boolean insertQuery (String statement) {
 		try {
 			if (connection == null) {
 				this.openDatabase();
@@ -46,7 +45,9 @@ class DatabaseHelper {
 			stmt.executeUpdate(statement);
 		} catch (SQLException e) {
 			e.printStackTrace();
+			return false;
 		}
+		return true;
 	}
 	
 	public ResultSet readQuery (String statement) {

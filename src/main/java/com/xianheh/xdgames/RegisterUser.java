@@ -98,7 +98,7 @@ public class RegisterUser extends HttpServlet {
 		return registrationJSON.get(key).toString();
     }
     
-    private void insertUserIntoDB (String fname, String lname, String email,	
+    private boolean insertUserIntoDB (String fname, String lname, String email,	
     		String username, String invitationCode,	String password) {
     	
     	String stmt; 
@@ -106,14 +106,10 @@ public class RegisterUser extends HttpServlet {
     	stmt += FIRST_NAME_DB + ", " + LAST_NAME_DB + ", " + EMAIL_DB + ", "; 
     	stmt += USER_NAME_DB + ", " + INVITATION_CODE_DB + ", " + PASSWORD_DB +") "; 
     	stmt += "VALUES ('" + fname + "','" + lname + "','" + email + "','"; 
-    	stmt += username + "','" + invitationCode + "','" + password +");";
-    	
-		LOGGER.info(stmt);    	
-    	
+    	stmt += username + "','" + invitationCode + "','" + password +"');";  	
     	
     	db.openDatabase();
-    	db.insertQuery("SELECT * FROM Users");
-    	db.closeDatabase();    	
+    	return db.insertQuery(stmt);
     }
     
     public void init() throws ServletException
@@ -142,15 +138,24 @@ public class RegisterUser extends HttpServlet {
 		String invitationCode = getValueFromRegistration(INVITATION_CODE_SERVER);
 		String password = getValueFromRegistration(PASSWORD_SERVER);
 		
-		insertUserIntoDB (fname, lname, email, username, invitationCode, password);
+		// TODO: properly handle response and put into seperate function
+		// TODO: Check before inserting into SQL database
+		if (insertUserIntoDB (fname, lname, email, username, invitationCode, password)) {
+			response.setStatus(response.SC_OK);
+			response.addHeader("Access-Control-Allow-Origin", "*");
+		    response.addHeader("Access-Control-Allow-Methods", "GET, PUT, POST, OPTIONS, DELETE");
+		    response.addHeader("Access-Control-Allow-Headers", "Content-Type");
+		    response.addHeader("Access-Control-Max-Age", "86400");
+		}
+		
+		else{
+			response.setStatus(response.SC_FORBIDDEN);
+			response.addHeader("Access-Control-Allow-Origin", "*");
+		    response.addHeader("Access-Control-Allow-Methods", "GET, PUT, POST, OPTIONS, DELETE");
+		    response.addHeader("Access-Control-Allow-Headers", "Content-Type");
+		    response.addHeader("Access-Control-Max-Age", "86400");
+		}
 
-		  
-		response.setStatus(response.SC_OK);
-		response.addHeader("Access-Control-Allow-Origin", "*");
-	    response.addHeader("Access-Control-Allow-Methods", "GET, PUT, POST, OPTIONS, DELETE");
-	    response.addHeader("Access-Control-Allow-Headers", "Content-Type");
-	    response.addHeader("Access-Control-Max-Age", "86400");
-		// TODO Auto-generated method stub
 	}
 
 }
