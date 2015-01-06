@@ -134,21 +134,24 @@ public class RegisterUser extends HttpServlet {
     private boolean checkPassword (String password) {
         return (password.length()!= 0);
     }
-
-    private boolean checkUsername (String username) {
-        return (username.length() != 0);
-    }
-    
+   
     private boolean containUsername (String username) {
     	username = username.toLowerCase();
     	   
     	String stmt = "SELECT * FROM Users WHERE ";
     	stmt  += USER_NAME_DB + "= '" + username + "';";
+    	LOGGER.info(stmt);
     	db.openDatabase();
-	    ResultSet rs = db.readQuery(stmt );
-	    if (rs != null) {
-		    return true;
+    	ResultSet rs = db.readQuery(stmt );
+	    try {
+	    	if (rs.next()) {
+	    		return true;
+	    	}
 	    }
+	    catch (SQLException e) {
+			e.printStackTrace();
+			return false;
+		}
 	    return false;
     }
     
@@ -158,9 +161,15 @@ public class RegisterUser extends HttpServlet {
      	stmt  += EMAIL_DB + "= '" + email + "';";
      	db.openDatabase();
      	ResultSet rs = db.readQuery(stmt );
-	    if (rs != null) {
-		    return true;
+	    try {
+	    	if (rs.next()) {
+	    		return true;
+	    	}
 	    }
+	    catch (SQLException e) {
+			e.printStackTrace();
+			return false;
+		}
 	    return false;
     }
     
@@ -169,36 +178,46 @@ public class RegisterUser extends HttpServlet {
 
     	if (fname.isEmpty() || lname.isEmpty() || email.isEmpty() 
 				|| username.isEmpty() || invitationCode.isEmpty() || password.isEmpty()) {
-			return "Error: Empty field";
+			return "Error: Empty fields";
 		}
-    	
-    	if (!checkUsername(username)) {
-    		return "Error: Invalid username";
-    	}
-    	if (!checkEmail(email)) {
-    		return "Error: Invalid email";
-    	}
-    	if (!checkPassword (password)) {
-    		return "Error: Invalid password";
-    	}
     	if (!checkFName (fname)) {
     		return "Error: Invalid first name";
     	}
     	if (!checkLName (lname)) {
     		return "Error: Invalid last name";
     	}
-    	if (!checkInvitation (invitationCode)) {
-    		return "Error: Invalid invitation code";
-    	}
-    	    	
-	    if (!containUsername(username)) {
+    	if (containUsername(username)) {
 		    return "Error: Usename already exist";
 	    }
-	   
-	    if (!containEmail(email)) {
+    	if (!checkPassword (password)) {
+    		return "Error: Invalid password";
+    	}
+    	if (!checkEmail(email)) {
+    		return "Error: Invalid email";
+    	}
+    	if (!checkInvitation (invitationCode)) {
+    		return "Error: Invalid invitation code";
+    	}	   
+	    if (containEmail(email)) {
 		    return "Error: Email already exist";
 	    }
     	return "Success";
+    }
+    
+    private void setRegistrationResponse (String msg, boolean success, HttpServletResponse response) throws IOException {
+    	JSONObject registrationJSON = new JSONObject();
+    	JSONObject resultJSON = new JSONObject();
+    	resultJSON.put("Success", success);
+    	resultJSON.put("Message", msg);
+    	registrationJSON.put("RegistrationResult", resultJSON);
+    	response.setContentType("application/json");
+    	response.getWriter().write(registrationJSON.toString());
+    	if (success) {
+    		response.setStatus(response.SC_OK);
+    	}
+    	else { 
+    		response.setStatus(response.SC_FORBIDDEN);
+    	}
     }
     
     public void init() throws ServletException
@@ -226,32 +245,26 @@ public class RegisterUser extends HttpServlet {
 		String username = getValueFromRegistration(USER_NAME_SERVER);
 		String invitationCode = getValueFromRegistration(INVITATION_CODE_SERVER);
 		String password = getValueFromRegistration(PASSWORD_SERVER);
+		Boolean success = true;
 		
 		String result = validateUserRegistration(fname, lname, email, username, invitationCode, password);
 		LOGGER.info (result);
 		if (result.contains("Error")) {
-			LOGGER.info("RESULT CONTAIN ERROR");
+			success = false;
+			setRegistrationResponse(result, success, response);
 			return;
 		}
-		// TODO: properly handle response and put into seperate function
-		// TODO: Check before inserting into SQL database
-		if (insertUserIntoDB (fname, lname, email, username, invitationCode, password)) {
-			response.setStatus(response.SC_OK);
-			response.addHeader("Access-Control-Allow-Origin", "*");
-		    response.addHeader("Access-Control-Allow-Methods", "GET, PUT, POST, OPTIONS, DELETE");
-		    response.addHeader("Access-Control-Allow-Headers", "Content-Type");
-		    response.addHeader("Access-Control-Max-Age", "86400");
-		}
 		
-		else{
+		success = insertUserIntoDB (fname, lname, email, username, invitationCode, password);
+		try {
+			setRegistrationResponse(result, success, response);
+		}
+		catch (IOException e) {
+			e.printStackTrace();
 			response.setStatus(response.SC_FORBIDDEN);
-			response.addHeader("Access-Control-Allow-Origin", "*");
-		    response.addHeader("Access-Control-Allow-Methods", "GET, PUT, POST, OPTIONS, DELETE");
-		    response.addHeader("Access-Control-Allow-Headers", "Content-Type");
-		    response.addHeader("Access-Control-Max-Age", "86400");
 		}
 
-		readAllUsers();
+		//readAllUsers();
 		db.closeDatabase();
 
 	}
